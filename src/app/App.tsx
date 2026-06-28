@@ -16,7 +16,7 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip,
 // ---------------------------------------------------------------------------
 // API
 // ---------------------------------------------------------------------------
-const API_BASE = "";  // change to e.g. "http://localhost:8080" if needed
+const API_BASE = "https://whg-wetterstation.de";  // change to e.g. "http://localhost:8080" if needed
 
 interface SensorReading {
   temperature: number;
@@ -55,7 +55,7 @@ function useHistoricalData(id: string | null) {
   useEffect(() => {
     if (id === null) return;
     setLoading(true);
-    fetch(`${API_BASE}/data/${id}`)
+    fetch(`${API_BASE}/api/weather/${id}`)
       .then((r) => r.json())
       .then((json: { data: SensorReading[] }) => setData(json.data ?? []))
       .catch(() => setData([]))
@@ -72,7 +72,7 @@ function useCurrentData(id: string | null) {
     if (id === null) return;
 
     const fetchCurrent = () => {
-      fetch(`${API_BASE}/current/${id}`)
+      fetch(`${API_BASE}/api/weather/current/${id}`)
         .then((r) => r.json())
         .then((json: CurrentReading) => setCurrent(json))
         .catch(() => {});
@@ -273,7 +273,7 @@ function MetricCard({ title, current, unit, series, color }: MetricCardProps) {
     labels: series.map((d) => d.label),
     datasets: [
       {
-        data: series.map((d) => d.value),
+        data: series.map((d) => d.value.toFixed(2)),
         borderColor: color,
         borderWidth: 1.5,
         backgroundColor: `${color}28`,
