@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import path from 'path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
-
+import compress from 'vite-plugin-compression'
 
 function figmaAssetResolver() {
   return {
@@ -19,18 +19,50 @@ function figmaAssetResolver() {
 export default defineConfig({
   plugins: [
     figmaAssetResolver(),
-    // The React and Tailwind plugins are both required for Make, even if
-    // Tailwind is not being actively used – do not remove them
+
+    // Required
     react(),
     tailwindcss(),
+
+    // Brotli compression
+    compress({
+      algorithm: 'brotliCompress',
+    }),
   ],
+
   resolve: {
     alias: {
-      // Alias @ to the src directory
       '@': path.resolve(__dirname, './src'),
     },
   },
 
-  // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
+  build: {
+    target: 'es2020',
+    sourcemap: false,
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+      },
+      format: {
+        comments: false,
+      },
+    },
+    cssCodeSplit: true,
+    assetsInlineLimit: 4096,
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            return 'vendor'
+          }
+        },
+      },
+    },
+  },
+
+  // File types to support raw imports.
   assetsInclude: ['**/*.svg', '**/*.csv'],
 })
