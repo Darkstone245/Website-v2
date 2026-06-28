@@ -279,8 +279,8 @@ function MetricCard({ title, current, unit, series, color }: MetricCardProps) {
         backgroundColor: `${color}28`,
         fill: true,
         tension: 0.4,
-        pointRadius: 0,
-        pointHoverRadius: 10,
+        pointRadius: 1,
+        pointHoverRadius: 20,
       },
     ],
   };
