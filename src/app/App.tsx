@@ -317,9 +317,11 @@ interface MetricCardProps {
   unit: string;
   series: { label: string; value: number }[];
   color: string;
+  suggestedMinValue: number;
+  suggestedMaxValue: number;
 }
 
-function MetricCard({ title, current, unit, series, color }: MetricCardProps) {
+function MetricCard({ title, current, unit, series, color , suggestedMinValue, suggestedMaxValue}: MetricCardProps) {
   const chartData = {
     labels: series.map((d) => d.label),
     datasets: [
@@ -339,9 +341,9 @@ function MetricCard({ title, current, unit, series, color }: MetricCardProps) {
     responsive: true,
     maintainAspectRatio: false,
     animation: { duration: 0 } as const,
-    scales: { x: { display: false }, y: { display: false } },
+    scales: { x: { display: true}, y: { display: true , suggestedMin:suggestedMinValue, suggestedMax:suggestedMaxValue} },
     plugins: {
-      legend: { display: false },
+      legend: { display: false , labels: {color: "white"}},
       tooltip: {
         backgroundColor: "#0f172a",
         titleColor: "#94a3b8",
@@ -515,6 +517,8 @@ export default function App() {
             unit="°C"
             series={tempSeries}
             color="#f59e0b"
+            suggestedMinValue={0}
+            suggestedMaxValue={30}
           />
           <MetricCard
             title="Luftdruck"
@@ -522,6 +526,8 @@ export default function App() {
             unit=" hPa"
             series={pressureSeries}
             color="#60a5fa"
+            suggestedMinValue={950}
+            suggestedMaxValue={1050}
           />
           <MetricCard
             title="Luftfeuchtigkeit"
@@ -529,6 +535,8 @@ export default function App() {
             unit="%"
             series={humiditySeries}
             color="#34d399"
+            suggestedMinValue={80}
+            suggestedMaxValue={40}
           />
         </div>
       </div>
