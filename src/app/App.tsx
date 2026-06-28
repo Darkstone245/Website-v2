@@ -390,9 +390,9 @@ export default function App() {
   const current           = useCurrentData(selectedId);
 
   // Derive chart series from historical data
-  const tempSeries     = history.map((d) => ({ label: new Time(d.unix).toLocaleTimeString("de-DE"), value: d.temperature }));
-  const humiditySeries = history.map((d) => ({ label: new Time(ds.unix).toLocaleTimeString("de-DE"), value: d.humidity }));
-  const pressureSeries = history.map((d) => ({ label: new Time(d.unix).toLocaleTimeString("de-DE"), value: d.pressure }));
+  const tempSeries     = history.map((d) => ({ label: new Date(d.unix).toLocaleTimeString("de-DE"), value: d.temperature }));
+  const humiditySeries = history.map((d) => ({ label: new Date(d.unix).toLocaleTimeString("de-DE"), value: d.humidity }));
+  const pressureSeries = history.map((d) => ({ label: new Date(d.unix).toLocaleTimeString("de-DE"), value: d.pressure }));
 
   // Latest values: prefer /current result, fall back to last history item
   const latest = current ?? (history.length ? {
