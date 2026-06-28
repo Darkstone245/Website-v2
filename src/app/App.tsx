@@ -151,7 +151,7 @@ function BackgroundScene() {
     // --- background plane — oversized, always covers ortho frustum ---
     const planeMat = new THREE.MeshStandardMaterial({ color: 0x14243a, roughness: 1, metalness: 0 });
     const plane = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), planeMat);
-    plane.position.z = -3;
+    plane.position.z = -2.25;
     scene.add(plane);
 
     // --- ambient base (dim blue) ---
