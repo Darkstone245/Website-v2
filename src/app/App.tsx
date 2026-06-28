@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import * as THREE from "three";
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -164,37 +165,56 @@ function BackgroundScene() {
     // --- yellow hemi: sky=warm gold, ground=deep navy, follows mouse ---
     // HemisphereLight shades by world-Y normal; we tilt it by rotating its target
     // Instead, we use a SpotLight to get a true mouse-centered cone on the plane
-    const spot = new THREE.SpotLight(0xffdd44, 80, 60, Math.PI / 5, 0.6, 1.5);
-    spot.position.set(0, 0, 8);          // starts centered
-    spot.target.position.set(0, 0, -3);  // aims at the plane
+    const spot = new THREE.PointLight(0xfc9601, 5, 0, 3);//new THREE.SpotLight(0xffdd44, 1000, 60, Math.PI / 5, 0.6, 3);
+    spot.position.set(0, 0, 2);          // starts centered
+    //spot.target.position.set(0, 0, -3);  // aims at the plane
     scene.add(spot);
-    scene.add(spot.target);
+    //scene.add(spot.target);
 
     // Separate soft hemi for the cloud (static warm sky tint)
     const hemi = new THREE.HemisphereLight(0xffe8a0, 0x0a1020, 0.8);
     scene.add(hemi);
 
     // --- cloud ---
-    const cloudMat = new THREE.MeshStandardMaterial({ color: 0xf2f5ff, roughness: 0.55, metalness: 0 });
-    const cloud    = new THREE.Group();
-    const blobs: [number, number, number, number][] = [
-      [0,     0,     0,    0.65],
-      [-0.65,-0.07,  0.10, 0.53],
-      [0.65, -0.03,  0.06, 0.55],
-      [-0.26, 0.33,  0,    0.44],
-      [0.33,  0.30,  0.03, 0.42],
-      [-0.97,-0.20,  0,    0.36],
-      [1.01, -0.20,  0,    0.34],
-      [0,    -0.33,  0.16, 0.40],
-    ];
-    blobs.forEach(([x, y, z, r]) => {
-      const m = new THREE.Mesh(new THREE.SphereGeometry(r, 28, 28), cloudMat);
-      m.position.set(x, y, z);
-      cloud.add(m);
-    });
-    const [cx, cy, cz] = CLOUD_POS[bpRef.current];
-    cloud.position.set(cx, cy, cz);
-    scene.add(cloud);
+    // --- cloud model ---
+    const loader = new GLTFLoader();
+    let cloud: THREE.Group | null = null;
+
+    loader.load(
+      "/models/cloud1.gltf",
+      (gltf) => {
+        cloud = gltf.scene;
+
+        cloud.scale.setScalar(0.3);
+
+        const cloudMat = new THREE.MeshToonMaterial({
+          color: 0xffffff,
+          depthTest: false,
+          depthWrite: false,
+        });
+
+        cloud.traverse((object) => {
+          if (object instanceof THREE.Mesh) {
+            object.material = cloudMat;
+          }
+        });
+
+        cloud.renderOrder = 999;
+
+        const [cx, cy, cz] = CLOUD_POS[bpRef.current];
+        cloud.position.set(cx, cy, cz);
+
+        scene.add(cloud);
+      },
+      (xhr) => {
+        if (xhr.lengthComputable) {
+          console.log(`${((xhr.loaded / xhr.total) * 100).toFixed(0)}% loaded`);
+        }
+      },
+      (err) => {
+        console.error(err);
+      }
+    );
 
     // --- mouse / touch ---
     const onMouse = (e: MouseEvent) => {
@@ -223,10 +243,18 @@ function BackgroundScene() {
       renderer.setSize(w, h);
       const newBp = getBP(w);
       bpRef.current = newBp;
-      const [px, py, pz] = CLOUD_POS[newBp];
-      cloud.position.set(px, py, pz);
+      if (cloud) {
+        const [px, py, pz] = CLOUD_POS[newBp];
+        cloud.position.set(px, py, pz);
+      }
     };
     window.addEventListener("resize", onResize);
+
+    // --- cloud Parameter ---
+    const speed = 0.005;
+    const moveRadius = 0.05;
+    const maxRotation = 25;
+    const rotationSpeed = 0.00005;
 
     // --- animation ---
     let raf: number;
@@ -237,9 +265,27 @@ function BackgroundScene() {
       const worldX = nx * frustumH * getAspect();
       const worldY = ny * frustumH;
       // Move spot above the cursor; target stays on the plane below
-      spot.position.set(worldX, worldY, 8);
-      spot.target.position.set(worldX, worldY, -3);
-      spot.target.updateMatrixWorld();
+      spot.position.set(worldX, worldY, -1);
+      //spot.target.position.set(worldX, worldY, -3);
+      //spot.target.updateMatrixWorld();
+
+      if(cloud){
+        const offsetX = Math.sin(raf*speed) * moveRadius;
+        const offsetY = Math.cos(raf*speed) * moveRadius;
+        const offsetZ = Math.sin(raf*speed) * moveRadius;
+
+        const [cx, cy, cz] = CLOUD_POS[getBP(window.innerWidth)]
+
+        cloud.position.set(cx+offsetX,cy+offsetY,cz+offsetZ);
+        
+        cloud.rotation.x += (Math.random() - 0.5) * maxRotation * rotationSpeed;
+        cloud.rotation.y += (Math.random() - 0.5) * maxRotation * rotationSpeed;
+        cloud.rotation.z += (Math.random() - 0.5) * maxRotation * rotationSpeed;
+
+        cloud.rotation.x = THREE.MathUtils.clamp(cloud.rotation.x, -Math.PI / 6, Math.PI / 6);
+        cloud.rotation.y = THREE.MathUtils.clamp(cloud.rotation.y, -Math.PI / 6, Math.PI / 6);
+        cloud.rotation.z = THREE.MathUtils.clamp(cloud.rotation.z, -Math.PI / 6, Math.PI / 6);
+      }
       renderer.render(scene, camera);
     };
     animate();
@@ -249,6 +295,11 @@ function BackgroundScene() {
       window.removeEventListener("mousemove", onMouse);
       window.removeEventListener("touchmove", onTouch);
       window.removeEventListener("resize", onResize);
+
+      if (cloud) {
+        scene.remove(cloud);
+      }
+
       renderer.dispose();
       el.removeChild(renderer.domElement);
     };
