@@ -23,7 +23,7 @@ interface SensorReading {
   temperature: number;
   humidity: number;
   pressure: number;
-  received_at: string;
+  unix: number;
 }
 
 interface CurrentReading {
