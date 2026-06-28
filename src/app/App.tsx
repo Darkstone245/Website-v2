@@ -62,6 +62,7 @@ function useHistoricalData(id: string | null) {
       .catch(() => setData([]))
       .finally(() => setLoading(false));
   }, [id]);
+  console.log("Historical data:", data);
 
   return { data, loading };
 }
@@ -348,6 +349,8 @@ function MetricCard({ title, current, unit, series, color , suggestedMinValue, s
         backgroundColor: "#0f172a",
         titleColor: "#94a3b8",
         bodyColor: "#f3f4f6",
+        mode: "index" as const,
+        intersect: false,
         callbacks: { label: (c: { parsed: { y: number } }) => `${c.parsed.y}${unit}` },
       },
     },
@@ -390,9 +393,9 @@ export default function App() {
   const current           = useCurrentData(selectedId);
 
   // Derive chart series from historical data
-  const tempSeries     = history.map((d) => ({ label: new Date(d.unix).toLocaleTimeString("de-DE"), value: d.temperature }));
-  const humiditySeries = history.map((d) => ({ label: new Date(d.unix).toLocaleTimeString("de-DE"), value: d.humidity }));
-  const pressureSeries = history.map((d) => ({ label: new Date(d.unix).toLocaleTimeString("de-DE"), value: d.pressure }));
+  const tempSeries     = history.map((d) => ({ label: new Date(d.unix*1000).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }), value: d.temperature }));
+  const humiditySeries = history.map((d) => ({ label: new Date(d.unix*1000).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }), value: d.humidity }));
+  const pressureSeries = history.map((d) => ({ label: new Date(d.unix*1000).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }), value: d.pressure }));
 
   // Latest values: prefer /current result, fall back to last history item
   const latest = current ?? (history.length ? {
@@ -406,7 +409,7 @@ export default function App() {
     if (!current) return "—";
     if (current.received_at) {
       // "2026-06-28 08:20:06" → locale date/time
-      const d = new Date(current.received_at.replace(" ", "T"));
+      const d = new Date(current.unix_timestamp ? current.unix_timestamp * 1000 : current.received_at);
       return `${d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })}, ${d.toLocaleTimeString("de-DE")}`;
     }
     if (current.unix_timestamp) {
