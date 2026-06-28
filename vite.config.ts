@@ -19,14 +19,22 @@ function figmaAssetResolver() {
 export default defineConfig({
   plugins: [
     figmaAssetResolver(),
-
-    // Required
     react(),
     tailwindcss(),
 
-    // Brotli compression
     compress({
       algorithm: 'brotliCompress',
+      ext: '.br',
+
+      // IMPORTANT: include html + assets
+      filter: (file) =>
+        /\.(html|js|css|svg|json)$/.test(file),
+
+      // keep original files (so index.html stays)
+      deleteOriginFile: false,
+
+      // ensures correct placement (same dir as original)
+      threshold: 0,
     }),
   ],
 
@@ -37,32 +45,17 @@ export default defineConfig({
   },
 
   build: {
-    target: 'es2020',
-    sourcemap: false,
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-      },
-      format: {
-        comments: false,
-      },
-    },
-    cssCodeSplit: true,
-    assetsInlineLimit: 4096,
-    chunkSizeWarningLimit: 600,
+    assetsDir: 'assets', // <-- ensures everything non-html goes here
+
     rollupOptions: {
       output: {
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            return 'vendor'
-          }
-        },
+        // keep JS/CSS in assets/
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]',
       },
     },
   },
 
-  // File types to support raw imports.
   assetsInclude: ['**/*.svg', '**/*.csv'],
 })
