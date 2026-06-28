@@ -280,7 +280,7 @@ function MetricCard({ title, current, unit, series, color }: MetricCardProps) {
         fill: true,
         tension: 0.4,
         pointRadius: 0,
-        pointHoverRadius: 4,
+        pointHoverRadius: 10,
       },
     ],
   };
