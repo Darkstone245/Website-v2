@@ -56,7 +56,7 @@ function useHistoricalData(id: string | null) {
   useEffect(() => {
     if (id === null) return;
     setLoading(true);
-    fetch(`${API_BASE}/api/weather/${id}`)
+    fetch(`${API_BASE}/api/weather/${id}?hours=20`)
       .then((r) => r.json())
       .then((json: { data: SensorReading[] }) => setData(json.data ?? []))
       .catch(() => setData([]))
