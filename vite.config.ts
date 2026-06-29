@@ -3,6 +3,7 @@ import path from 'path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import compress from 'vite-plugin-compression'
+import copy from 'rollup-plugin-copy';
 
 function figmaAssetResolver() {
   return {
@@ -46,9 +47,22 @@ export default defineConfig({
 
   build: {
     assetsDir: 'assets', // <-- ensures everything non-html goes here
-
+    assetsInlineLimit: 4096,
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true
+      },
+      format: {
+        comments: false
+      }
+    },
     rollupOptions: {
       output: {
+        plugins: [
+          copy({ targets: [{ src: 'models/**/*', dest: 'dist/models' }], hook: 'writeBundle' })
+        ],
         // keep JS/CSS in assets/
         entryFileNames: 'assets/[name]-[hash].js',
         chunkFileNames: 'assets/[name]-[hash].js',
